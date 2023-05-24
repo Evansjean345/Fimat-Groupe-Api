@@ -1,9 +1,13 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 4000;
 require("dotenv").config({ path: "./config/.env" });
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const UserRoutes = require("./routes/user");
+const OrderRoutes = require("./routes/order");
+const { checkUser, requireAuth } = require("./middleware/auth");
 
 app.get("/", (req, res) => res.send("Welcome to Fimat Group Api"));
 
@@ -25,6 +29,9 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 //connect to database
 //not change the Username
 
@@ -36,4 +43,9 @@ mongoose
   .then((res) => console.log(`database connecting ${res}`))
   .catch((err) => console.log(`connection failed ${err.message}`));
 
+app.use("*", checkUser);
+app.get("/jwtid", requireAuth, (req, res) => {
+  res.status(200).send(res.locals.user.id);
+});
 app.use(UserRoutes);
+app.use(OrderRoutes);
